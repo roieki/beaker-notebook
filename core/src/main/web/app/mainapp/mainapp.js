@@ -599,7 +599,19 @@
                 return;
               }
               saveStart();
-              return savePromptIfOverwrite(notebookUri, uriType).then(saveDone, saveFailed);
+              return savePromptIfOverwrite(notebookUri, uriType)
+              .then(function(ret) {
+                return bkSession.getSessions().then(function(sessions){
+                  var sessionID = bkSessionManager.getSessionId();
+                  var currentSession = sessions[sessionID];
+                  currentSession.uriType = ret.uriType;
+                  currentSession.notebookUri = ret.uri;
+                  return bkSession.backup(sessionID, currentSession);
+                })
+                .then(function() {
+                  return saveDone(ret);
+                });
+              }, saveFailed);
             },
             closeNotebook: function() {
               var self = this;
